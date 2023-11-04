@@ -158,6 +158,14 @@ describe("POST /s1/exercice4", () => {
     expect(res.body).toEqual([{ reponse: "Veuillez entrer un nombre valide" }]);
   });
 
+  test("Renvoie une erreur si n2 = 0", async () => {
+    const res = await request(app)
+      .post("/s1/exercice4")
+      .send({ n2 : 0});
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual([{ reponse: "Veuillez entrer un nombre valide" }]);
+  });
+
   test("Calcule correctement la division de n1 et n2", async () => {
     const res = await request(app).post("/s1/exercice4").send({ n1: 6, n2: 2 });
     expect(res.statusCode).toBe(200);
@@ -284,5 +292,197 @@ describe("POST /s1/exercice10", () => {
       .send({ n1: 6, n2: 3 });
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual([{ reponse: 3 }]);
+  });
+});
+
+describe("POST /s2/exercice1", () => {
+  test("doit renvoyer la date d'aujourd'hui moins 10 ans", async () => {
+    const dateActuelle = new Date();
+    const année = dateActuelle.getFullYear() - 10;
+    const mois = ("0" + (dateActuelle.getMonth() + 1)).slice(-2);
+    const jour = ("0" + dateActuelle.getDate()).slice(-2);
+    const dateAttendue = `${année}-${mois}-${jour}`;
+
+    const response = await request(app).post("/s2/exercice1").expect(200);
+
+    expect(response.body[0].reponse).toBe(dateAttendue);
+  });
+});
+
+describe("POST /s2/exercice2", () => {
+  test("doit renvoyer une date formatée en 'jj/mm/aaaa'", async () => {
+    // Vous devez envoyer une date valide dans le corps de la requête.
+    const dateAEnvoyer = new Date(2023, 10, 2); // pour 2 Novembre 2023
+    const dateFormateeAttendue = "02/11/2023";
+
+    const response = await request(app)
+      .post("/s2/exercice2")
+      .send({ date: dateAEnvoyer.toISOString() }) // Supposant que le corps de la requête attend une date ISO.
+      .expect(200);
+
+    expect(response.body[0].reponse).toBe(dateFormateeAttendue);
+  });
+
+  test("doit renvoyer une erreur si la date est invalide", async () => {
+    const dateAEnvoyer = "date invalide";
+
+    const response = await request(app)
+      .post("/s2/exercice2")
+      .send({ date: dateAEnvoyer })
+      .expect(400);
+
+    expect(response.body.reponse).toBe("Veuillez entrer une date valide.");
+  });
+
+  test("doit renvoyer une erreur si la date est undefined", async () => {
+    const dateAEnvoyer = undefined;
+
+    const response = await request(app)
+      .post("/s2/exercice2")
+      .send({ date: dateAEnvoyer })
+      .expect(400);
+
+    expect(response.body.reponse).toBe("Veuillez entrer une date valide.");
+  });
+
+  test("doit renvoyer une erreur si la date est undefined", async () => {
+    const dateAEnvoyer = undefined;
+
+    const response = await request(app)
+      .post("/s2/exercice2")
+      .send({ date: dateAEnvoyer })
+      .expect(400);
+
+    expect(response.body.reponse).toBe("Veuillez entrer une date valide.");
+  });
+});
+
+describe("POST /s2/exercice3", () => {
+  test("calcule de jours entre deux dates", async () => {
+    const date1 = new Date("2023-01-01");
+    const date2 = new Date("2023-01-10");
+
+    const expectedDifference = (date2 - date1) / (1000 * 60 * 60 * 24);
+
+    const response = await request(app)
+      .post("/s2/exercice3")
+      .send({ date1: date1.toISOString(), date2: date2.toISOString() });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body[0].reponse).toBe(expectedDifference);
+  });
+
+  test("dates invalides", async () => {
+    const invalidDate1 = "not-a-date";
+    const date2 = new Date("2023-01-10");
+
+    const response = await request(app)
+      .post("/s2/exercice3")
+      .send({ date1: invalidDate1, date2: date2.toISOString() });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.reponse).toBe("Veuillez entrer des dates valides.");
+  });
+
+  test("date1 > date2", async () => {
+    const date1 = new Date("2023-01-10");
+    const date2 = new Date("2023-01-01");
+
+    const response = await request(app)
+      .post("/s2/exercice3")
+      .send({ date1: date1.toISOString(), date2: date2.toISOString() });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.reponse).toBe(
+      "La première date doit être antérieure à la deuxième."
+    );
+  });
+});
+
+describe("POST /s2/exercice4", () => {
+  test("ajoute des jours a une date", async () => {
+    const date = new Date("2023-01-01").toISOString();
+    const jours = 10;
+    const expectedDate = new Date("2023-01-11").toISOString();
+
+    const response = await request(app)
+      .post("/s2/exercice4")
+      .send({ date, jours });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.reponse).toBe(expectedDate);
+  });
+
+  test("erreur si les jours sont négatifs", async () => {
+    const date = new Date("2023-01-01").toISOString();
+    const jours = -10;
+    const expectedDate = new Date("2023-01-11").toISOString();
+
+    const response = await request(app)
+      .post("/s2/exercice4")
+      .send({ date, jours });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.reponse).toBe("Veuillez entrer un nombre positif.");
+  });
+
+  test("erreur si les jours sont nuls", async () => {
+    const date = new Date("2023-01-01").toISOString();
+    const jours = null;
+
+    const response = await request(app)
+      .post("/s2/exercice4")
+      .send({ date, jours });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.reponse).toBe("Veuillez entrer un nombre.");
+  });
+
+  test("erreur si on ne rajoute pas de jours", async () => {
+    const date = new Date("2023-01-01").toISOString();
+    const jours = 0;
+
+    const response = await request(app)
+      .post("/s2/exercice4")
+      .send({ date, jours });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.reponse).toBe("Veuillez entrer un nombre.");
+  });
+
+  test("erreur si les jours sont undefined", async () => {
+    const date = new Date("2023-01-01").toISOString();
+    const jours = undefined;
+
+    const response = await request(app)
+      .post("/s2/exercice4")
+      .send({ date, jours });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.reponse).toBe("Veuillez entrer un nombre.");
+  });
+
+  test("erreur si les jours ne sont pas un nombre", async () => {
+    const date = new Date("2023-01-01").toISOString();
+    const jours = "not-a-number";
+
+    const response = await request(app)
+      .post("/s2/exercice4")
+      .send({ date, jours });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.reponse).toBe("Données invalides.");
+  });
+
+  test("erreur si la date est invalide", async () => {
+    const invalidDate = "not-a-date";
+    const jours = "not-a-number";
+
+    const response = await request(app)
+      .post("/s2/exercice4")
+      .send({ date: invalidDate, jours });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.reponse).toBe("Données invalides.");
   });
 });
